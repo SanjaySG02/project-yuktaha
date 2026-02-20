@@ -37,7 +37,7 @@ model.classifier = nn.Linear(model.classifier.in_features, 1)
 model.load_state_dict(torch.load("model.pth", map_location=device))
 model = model.to(device)
 
-# ✅ Set evaluation mode (THIS IS ENOUGH)
+# ✅ Set evaluation mode
 model.eval()
 
 # Image transform (must match training)
@@ -50,12 +50,15 @@ transform = transforms.Compose([
     )
 ])
 
+# Root route (so Render health check doesn't show 405)
 @app.get("/")
 def home():
     return {"message": "Backend Running 🚀"}
 
+# Prediction route
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
+
     contents = await file.read()
     image = Image.open(io.BytesIO(contents)).convert("RGB")
 
@@ -65,8 +68,9 @@ async def predict(file: UploadFile = File(...)):
     with torch.no_grad():
         output = model(image)
         probability = torch.sigmoid(output).item()
-    print("Confidence:", probability)
 
+    print("Confidence:", probability)
+    print("🔥 Predict endpoint called")
 
     prediction = 1 if probability > 0.5 else 0
 
