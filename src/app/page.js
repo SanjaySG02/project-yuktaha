@@ -25,32 +25,33 @@ export default function Home() {
     formData.append("file", selectedImage);
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/predict", {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        "https://project-yuktaha-backend.onrender.com/predict",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Server response was not OK");
+      }
 
       const data = await response.json();
       console.log("Backend Response:", data);
 
       const prediction = data.prediction;
 
-      // 🔥 IMPORTANT FIX
-      // Backend confidence is probability of REAL (sigmoid output)
+      // Backend confidence is probability of REAL
       const probReal = Number(data.confidence);
       const probFake = 1 - probReal;
 
-      // Final confidence = probability of predicted class
       const finalConfidence =
         prediction === 1 ? probReal : probFake;
 
       const confidencePercent = (finalConfidence * 100).toFixed(2);
 
-      // Dataset mapping:
-      // 0 = fake (AI)
-      // 1 = real
       const isReal = prediction === 1;
-
       const threshold = 0.6;
 
       if (finalConfidence < threshold) {
@@ -62,7 +63,6 @@ export default function Home() {
       } else {
         setResult(isReal ? "Real (Camera-captured)" : "AI-generated");
         setBenchmark(`${confidencePercent}% Confidence`);
-
         setAnalysis(
           isReal
             ? "The model predicts this image follows patterns consistent with natural camera-captured photos."
@@ -71,7 +71,7 @@ export default function Home() {
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("Error connecting to backend. Make sure server is running.");
+      alert("Error connecting to backend. Please try again.");
     }
 
     setLoading(false);
